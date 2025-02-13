@@ -1,38 +1,59 @@
-from ultralytics import YOLO
+import tkinter as tk
+from tkinter import filedialog, Toplevel
 import cv2
-import matplotlib.pyplot as plt
+from PIL import Image, ImageTk
+from ultralytics import YOLO
 
-# Load mô hình
-model = YOLO(r"D:\K57-KMT\Semester_2_2024-2025\ThiGiacMay\BTL\Waste-Classification-using-YOLOv8-main\streamlit-detection-tracking - app\weights\yoloooo.pt")
+# Load mô hình YOLO
+model = YOLO(r"D:\K57-KMT\Semester_2_2024-2025\ThiGiacMay\BTL\Waste-Classification-using-YOLOv8-main\best.pt")
 
-# Load ảnh
-img_path = "rac_1.jpg"  # Đổi thành đường dẫn ảnh của bạn
-img = cv2.imread(img_path)
+def select_image():
+    file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg;*.jpeg;*.png")])
+    if not file_path:
+        return
 
-# Chạy mô hình dự đoán
-results = model(img)
+    # Đọc ảnh
+    img = cv2.imread(file_path)
+    img_resized = cv2.resize(img, (640, 640))
 
-# Vẽ kết quả lên ảnh
-for r in results:
-    img_plot = r.plot()  # Vẽ bounding box lên ảnh
+    # Chạy YOLO dự đoán
+    results = model(img_resized)
+    for r in results:
+        img_plot = r.plot()
 
-# Hiển thị ảnh
-plt.imshow(cv2.cvtColor(img_plot, cv2.COLOR_BGR2RGB))
-plt.axis("off")
-plt.show()
+    # Chuyển ảnh sang định dạng Tkinter
+    img_rgb = cv2.cvtColor(img_plot, cv2.COLOR_BGR2RGB)
+    img_pil = Image.fromarray(img_rgb)
+    img_tk = ImageTk.PhotoImage(img_pil)
 
-# Load ảnh
-img_path = "out.png"  # Đổi thành đường dẫn ảnh của bạn
-img = cv2.imread(img_path)
+    # Tạo cửa sổ mới để hiển thị ảnh
+    result_window = Toplevel(root)
+    result_window.title("Kết quả nhận diện")
+    result_window.geometry("700x700")
+    result_window.configure(bg="white")
 
-# Chạy mô hình dự đoán
-results = model(img)
+    # Tiêu đề
+    label_title = tk.Label(result_window, text="🔍 Kết quả nhận diện", font=("Arial", 18, "bold"), fg="blue", bg="white")
+    label_title.pack(pady=10)
 
-# Vẽ kết quả lên ảnh
-for r in results:
-    img_plot = r.plot()  # Vẽ bounding box lên ảnh
+    # Hiển thị ảnh nhận diện
+    label_img = tk.Label(result_window, image=img_tk, bg="white")
+    label_img.image = img_tk
+    label_img.pack(pady=10)
 
-# Hiển thị ảnh
-plt.imshow(cv2.cvtColor(img_plot, cv2.COLOR_BGR2RGB))
-plt.axis("off")
-plt.show()
+# Tạo cửa sổ chính
+root = tk.Tk()
+root.title("♻ Nhận diện rác thải")
+root.geometry("400x300")
+root.configure(bg="#f0f0f0")
+
+# Tiêu đề
+title_label = tk.Label(root, text="♻ Nhận diện rác thải thông minh", font=("Arial", 18, "bold"), fg="#007BFF", bg="#f0f0f0")
+title_label.pack(pady=10)
+
+# Nút chọn ảnh
+btn_select = tk.Button(root, text="📷 Chọn ảnh", command=select_image, font=("Arial", 16), bg="#28a745", fg="white", padx=20, pady=10)
+btn_select.pack(pady=20)
+
+# Chạy giao diện
+root.mainloop()
